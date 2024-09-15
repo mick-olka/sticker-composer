@@ -1,63 +1,61 @@
 "use client";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { Image as ImageJS } from "image-js";
 
 type Props = {
   id: string;
+  padding?: number;
+  image?: string;
+  onImageChange: (img: string) => void;
 };
-export const Segment = ({}: Props) => {
-  const [image, setImage] = useState<string | null>(null);
-  const [rotated, setRotated] = useState(false);
+export const Segment = ({ image, onImageChange }: Props) => {
   const divRef = useRef<HTMLDivElement>(null);
 
-  const onImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const fileReader = new FileReader();
       fileReader.onload = () => {
         const imageUrl = fileReader.result as string;
-        setImage(imageUrl);
+        onImageChange(imageUrl);
       };
       fileReader.readAsDataURL(event.target.files[0]);
     }
   };
-  const getDivDimensions = () => {
-    if (divRef.current) {
-      const dimensions = divRef.current.getBoundingClientRect();
-      if (rotated)
-        return { width: dimensions.height, height: dimensions.width };
-      return { width: dimensions.width, height: dimensions.height };
+
+  const handleRotateImage = async () => {
+    if (image) {
+      const img = await ImageJS.load(image);
+      const rotatedImage = img.rotateLeft();
+      onImageChange(rotatedImage.toDataURL());
     }
-    return { width: "100%", height: "100%" };
   };
-  const handleRotateClick = () => {
-    getDivDimensions();
-    setRotated((r) => !r);
-  };
+
   return (
     <div
-      className="h-full w-full relative overflow-hidden hover:bg-slate-100"
+      className={"h-full w-full relative overflow-hidden hover:bg-slate-100"}
       ref={divRef}
     >
       <input
         type="file"
-        onChange={onImageChange}
+        onChange={handleImageChange}
         className="filetype absolute w-full h-1/2 opacity-0 hover:opacity-100 z-10"
       />
       {image ? (
         <>
           <Image
-            className={`absolute top-0 bottom-0 right-0 left-0 object-contain m-auto ${
-              rotated ? "rotate-90" : ""
-            }`}
+            className={
+              "absolute top-0 bottom-0 right-0 left-0 object-contain m-auto max-w-7xl h-full w-full p-1"
+            }
             src={image}
             alt=""
             width={640}
             height={640}
             priority
-            style={getDivDimensions()}
+            // style={getDivDimensions()}
           />
           <button
-            onClick={handleRotateClick}
+            onClick={handleRotateImage}
             className="text-black filetype bottom-0 absolute w-full h-1/2 opacity-0 bg-slate-100 hover:opacity-50"
           >
             ROTATE
